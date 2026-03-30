@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reflective AI Journal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Hand-drawn effect */
+    .doodle {
+      border: 3px solid black;
+      border-radius: 8px;
+      position: relative;
+      transform: rotate(-0.5deg);
+    }
+
+    .doodle::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      right: -2px;
+      bottom: -2px;
+      border: 3px solid black;
+      border-radius: 8px;
+      opacity: 0.6;
+      transform: rotate(0.8deg);
+      pointer-events: none;
+    }
+
+    .doodle2 {
+      transform: rotate(0.7deg);
+    }
+
+    .doodle3 {
+      transform: rotate(-1deg);
+    }
+
+    /* Keep normal font overall */
+    body {
+      font-family: sans-serif;
+    }
+
+    /* Only headings get doodle feel */
+    .hand {
+      font-family: 'Comic Sans MS', cursive;
+    }
+  </style>
+</head>
+
+<body class="bg-white text-black">
+
+  <!-- Navbar -->
+  <nav class="flex justify-between items-center p-6 border-b-2 border-black">
+    <h1 class="text-4xl font-bold hand">ReflectiveAI</h1>
+    <button class="border-2 border-black px-4 py-2">Login</button>
+  </nav>
+
+  <!-- Hero -->
+  <section class="text-center mt-20 px-6">
+    <div class="doodle inline-block p-6 doodle2">
+      <h1 class="text-5xl font-bold hand">
+        Your Thoughts,<br>Reflected Back
+      </h1>
+    </div>
+
+    <p class="mt-8 text-lg max-w-xl mx-auto">
+      Write freely. Let AI help you understand your emotions.
+    </p>
+
+    <button class="mt-8 doodle px-6 py-3 doodle3">
+      Start Writing →
+    </button>
+  </section>
+
+  <!-- Features -->
+  <section class="mt-24 px-6 grid md:grid-cols-3 gap-8">
+
+    <div class="doodle p-6">
+      <h2 class="text-xl font-bold hand">AI Reflection</h2>
+      <p class="mt-2">
+        Thoughtful insights on your emotions.
+      </p>
+    </div>
+
+    <div class="doodle p-6 doodle2">
+      <h2 class="text-xl font-bold hand">Memory</h2>
+      <p class="mt-2">
+        Your past entries are remembered.
+      </p>
+    </div>
+
+    <div class="doodle p-6 doodle3">
+      <h2 class="text-xl font-bold hand">Smart Search</h2>
+      <p class="mt-2">
+        Find feelings, not just words.
+      </p>
+    </div>
+
+  </section>
+
+  <!-- CTA -->
+  <section class="mt-24 text-center mb-20">
+    <div class="doodle inline-block px-8 py-4">
+      <h2 class="text-2xl font-bold hand">
+        Start your journaling journey
+      </h2>
+    </div>
+
+    <br>
+
+    <button class="mt-6 doodle px-8 py-3">
+      Get Started
+    </button>
+  </section>
+
+</body>
+</html>
