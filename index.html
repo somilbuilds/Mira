@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    /* Hand-drawn effect */
     .doodle {
       border: 3px solid black;
       border-radius: 8px;
@@ -29,23 +28,11 @@
       pointer-events: none;
     }
 
-    .doodle2 {
-      transform: rotate(0.7deg);
-    }
+    .doodle2 { transform: rotate(0.7deg); }
+    .doodle3 { transform: rotate(-1deg); }
 
-    .doodle3 {
-      transform: rotate(-1deg);
-    }
-
-    /* Keep normal font overall */
-    body {
-      font-family: sans-serif;
-    }
-
-    /* Only headings get doodle feel */
-    .hand {
-      font-family: 'Comic Sans MS', cursive;
-    }
+    body { font-family: sans-serif; }
+    .hand { font-family: 'Comic Sans MS', cursive; }
   </style>
 </head>
 
@@ -69,51 +56,38 @@
       Write freely. Let AI help you understand your emotions.
     </p>
 
-    <button class="mt-8 doodle px-6 py-3 doodle3">
-      Start Writing →
+    <!-- INPUT -->
+    <textarea id="journalInput"
+      class="mt-8 w-full max-w-xl border-2 border-black p-4"
+      rows="5"
+      placeholder="Write your thoughts..."></textarea>
+
+    <!-- BUTTON -->
+    <button onclick="sendEntry()" class="mt-6 doodle px-6 py-3 doodle3">
+      Reflect →
     </button>
+
+    <!-- RESPONSE -->
+    <p id="responseText" class="mt-6 text-lg max-w-xl mx-auto"></p>
   </section>
 
-  <!-- Features -->
-  <section class="mt-24 px-6 grid md:grid-cols-3 gap-8">
+  <script>
+    async function sendEntry() {
+      const text = document.getElementById("journalInput").value;
 
-    <div class="doodle p-6">
-      <h2 class="text-xl font-bold hand">AI Reflection</h2>
-      <p class="mt-2">
-        Thoughtful insights on your emotions.
-      </p>
-    </div>
+      const response = await fetch("http://127.0.0.1:8000/journal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ entry: text })
+      });
 
-    <div class="doodle p-6 doodle2">
-      <h2 class="text-xl font-bold hand">Memory</h2>
-      <p class="mt-2">
-        Your past entries are remembered.
-      </p>
-    </div>
+      const data = await response.json();
 
-    <div class="doodle p-6 doodle3">
-      <h2 class="text-xl font-bold hand">Smart Search</h2>
-      <p class="mt-2">
-        Find feelings, not just words.
-      </p>
-    </div>
-
-  </section>
-
-  <!-- CTA -->
-  <section class="mt-24 text-center mb-20">
-    <div class="doodle inline-block px-8 py-4">
-      <h2 class="text-2xl font-bold hand">
-        Start your journaling journey
-      </h2>
-    </div>
-
-    <br>
-
-    <button class="mt-6 doodle px-8 py-3">
-      Get Started
-    </button>
-  </section>
+      document.getElementById("responseText").innerText = data.reflection;
+    }
+  </script>
 
 </body>
 </html>
