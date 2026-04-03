@@ -1,3 +1,4 @@
+# Mira v1 — entry point. starts the server, connects routes, creates DB tables on startup.
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
