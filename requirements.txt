@@ -1,16 +1,13 @@
-# web framework and ASGI server
 fastapi==0.115.0
 uvicorn==0.30.6
 
-# database ORM and PostgreSQL driver
 sqlalchemy==2.0.35
 psycopg[binary]==3.3.3
+pgvector==0.3.2
 
-# Google Gemini AI SDK
 google-generativeai==0.8.3
+google-cloud-aiplatform==1.71.1
+vertexai==1.71.1
 
-# reads .env files into environment variables
 python-dotenv==1.0.1
-
-# data validation (FastAPI depends on this, listing explicitly for clarity)
 pydantic==2.9.2
