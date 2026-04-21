@@ -1,23 +1,14 @@
-import google.generativeai as genai
-from dotenv import load_dotenv
 import os
+import re
+from dotenv import load_dotenv
+import google.generativeai as genai
 
 load_dotenv()
 
-# configure the Gemini client with our API key.
-# genai is the official Google Generative AI Python library.
-# it handles the HTTP request to Google's servers for us —
-# similar to how SQLAlchemy handles the connection to PostgreSQL.
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+_gemini = genai.GenerativeModel("gemini-2.5-flash")
 
-# create the model instance once at module load time.
-# gemini-1.5-flash is fast and free-tier friendly — good for development.
-model = genai.GenerativeModel("gemini-2.5-flash")
-
-# the system prompt defines Mira's personality and behaviour.
-# this is sent with every request — it tells the AI what role it's playing.
-# it never changes per request. the user's journal entry is what changes.
-SYSTEM_PROMPT = """You are Mira — a psychologically-informed journaling companion.
+_REFLECTION_SYSTEM = """You are Mira — a psychologically-informed journaling companion.
 
 When someone shares a journal entry with you, your job is to reflect it back 
 with depth, warmth, and honesty. You are not a therapist. You do not diagnose. 
@@ -27,77 +18,99 @@ What you do:
 - Name what you observe beneath the surface of what was written
 - Identify emotional patterns or tensions present in the entry  
 - Reflect the person's own words and feelings back to them in a new light
+- If past entries are provided, subtly acknowledge the pattern without being clinical
 - End with one gentle, open question that invites deeper reflection
 
 Keep your response concise — 3 to 5 sentences plus the closing question.
 Write as if you are speaking directly to the person, not about them."""
 
+_MOOD_SYSTEM = """Read this journal entry and return exactly ONE lowercase word that best 
+captures the dominant emotional tone. Valid words: calm, content, grateful, hopeful, 
+anxious, stressed, overwhelmed, frustrated, angry, sad, grief, lonely, confused, 
+numb, tired, restless, excited, proud.
+Reply with ONLY that one word. No punctuation. No explanation."""
 
-async def get_reflection(entry_text: str) -> str | None:
-    """
-    Sends the journal entry to Gemini and returns the reflection.
-    Returns None if the API call fails — so the app doesn't crash
-    just because the AI is unavailable.
+_CHAT_SYSTEM = """You are Mira — a psychologically-informed journaling companion.
+The user previously wrote a journal entry. You reflected on it. Now they want to talk.
+Respond with warmth, precision, and brevity (2–4 sentences).
+Never diagnose. Never give unsolicited advice.
+If the person seems in real distress, gently suggest speaking to someone they trust."""
 
-    This function is async because the API call involves network I/O —
-    it has to send a request to Google's servers and wait for a response.
-    making it async means the event loop can handle other requests
-    while this one is waiting for Gemini to respond.
-    """
+
+async def embed_text(text: str) -> list[float] | None:
+    """Vertex AI text-embedding-004 → 768-dim vector."""
     try:
-        # combine system prompt and user entry into a single prompt.
-        # gemini-flash doesn't have a separate system_instruction parameter
-        # in the same way as GPT-4, so we prepend it to the message.
-        full_prompt = f"{SYSTEM_PROMPT}\n\nJournal entry:\n{entry_text}"
+        import vertexai
+        from vertexai.language_models import TextEmbeddingModel
+        import asyncio
 
-        # generate_content_async is the async version of generate_content.
-        # the await here is what suspends this coroutine while waiting
-        # for Google's API to respond — freeing the event loop.
-        response = await model.generate_content_async(full_prompt)
+        PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
+        REGION = os.getenv("GOOGLE_CLOUD_REGION", "us-central1")
+        vertexai.init(project=PROJECT_ID, location=REGION)
 
-        # response.text is the actual string the model returned.
-        return response.text
-
+        model = TextEmbeddingModel.from_pretrained("text-embedding-004")
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, lambda: model.get_embeddings([text]))
+        return result[0].values
     except Exception as e:
-        # log the error so we can see what went wrong in the terminal,
-        # but return None instead of crashing the entire request.
-        # the route handler will deal with a None reflection gracefully.
-        print(f"Gemini API error: {e}")
+        print(f"[mira] embed_text error: {e}")
         return None
 
-def get_chat_response(message: str, history: list, context_entries: list):
-    """
-    Simple chat response using Gemini.
-    history: list of past messages
-    context_entries: similar past journal entries (RAG)
-    """
 
-    import os
-    import google.generativeai as genai
+async def get_reflection(entry_text: str, past_entries: list[str] | None = None) -> str | None:
+    try:
+        memory_block = ""
+        if past_entries:
+            joined = "\n\n".join(f"- {e}" for e in past_entries)
+            memory_block = f"\n\nEmotionally similar past entries (memory):\n{joined}\n"
 
-    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        full_prompt = f"{_REFLECTION_SYSTEM}{memory_block}\n\nJournal entry:\n{entry_text}"
+        response = await _gemini.generate_content_async(full_prompt)
+        return response.text
+    except Exception as e:
+        print(f"[mira] get_reflection error: {e}")
+        return None
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
 
-    # build context
-    context_text = "\n".join([e.text for e in context_entries])
+async def infer_mood(entry_text: str) -> str | None:
+    try:
+        response = await _gemini.generate_content_async(
+            f"{_MOOD_SYSTEM}\n\nEntry:\n{entry_text}"
+        )
+        mood = re.sub(r"[^a-z]", "", response.text.strip().lower().split()[0])
+        return mood if mood else None
+    except Exception as e:
+        print(f"[mira] infer_mood error: {e}")
+        return None
 
-    history_text = "\n".join([f"{m.role}: {m.content}" for m in history])
 
-    prompt = f"""
-You are Mira, a calm, reflective journaling companion.
+async def get_chat_response(
+    entry_text: str,
+    reflection: str,
+    conversation: list[dict],
+    past_entries: list[str] | None = None,
+) -> str | None:
+    try:
+        memory_block = ""
+        if past_entries:
+            joined = "\n\n".join(f"- {e}" for e in past_entries)
+            memory_block = f"\nMemory (similar past entries):\n{joined}\n"
 
-Past memories:
-{context_text}
+        history_str = "\n".join(
+            f"{'User' if m['role'] == 'user' else 'Mira'}: {m['content']}"
+            for m in conversation
+        )
 
-Conversation so far:
-{history_text}
-
-User: {message}
-
-Respond gently, thoughtfully, and insightfully.
-"""
-
-    response = model.generate_content(prompt)
-
-    return response.text
+        full_prompt = (
+            f"{_CHAT_SYSTEM}"
+            f"\n\nOriginal entry:\n{entry_text}"
+            f"\n\nYour initial reflection:\n{reflection}"
+            f"{memory_block}"
+            f"\n\nConversation:\n{history_str}"
+            f"\n\nMira:"
+        )
+        response = await _gemini.generate_content_async(full_prompt)
+        return response.text
+    except Exception as e:
+        print(f"[mira] get_chat_response error: {e}")
+        return None

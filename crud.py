@@ -1,89 +1,48 @@
 from sqlalchemy.orm import Session
-from models import Entry
+from sqlalchemy import text
+from models import Entry, ChatMessage
 
 
-# CRUD stands for Create, Read, Update, Delete — the four basic database operations.
-# keeping these functions here, separate from the routes, is called
-# "separation of concerns". your route handler decides WHAT to do.
-# your crud functions decide HOW to do it with the database.
-# this makes testing easier and keeps each file focused on one job.
-
-
-def create_entry(db: Session, text: str, reflection: str | None) -> Entry:
-    """
-    Creates a new Entry row in the database and returns it.
-
-    db       — the active database session (passed in from the route)
-    text     — the original journal entry text
-    reflection — the AI's reflection (can be None if the AI call failed)
-    """
-
-    # create a new Entry object in Python — not in the database yet.
-    # this is just a Python object at this point.
-    db_entry = Entry(text=text, reflection=reflection)
-
-    # add it to the session — SQLAlchemy now knows about this object
-    # and will include it in the next commit. still not in the DB yet.
+def create_entry(db: Session, text: str, reflection: str | None, mood: str | None, embedding: list | None) -> Entry:
+    db_entry = Entry(text=text, reflection=reflection, mood=mood, embedding=embedding)
     db.add(db_entry)
-
-    # commit — this is the moment the INSERT statement actually runs
-    # against PostgreSQL. the transaction is finalized here.
-    # if anything fails before this point, nothing is saved.
     db.commit()
-
-    # refresh — after committing, PostgreSQL has filled in values we didn't set:
-    # the auto-generated id and the server-set created_at timestamp.
-    # refresh pulls those values back from the database into our Python object
-    # so we can return them in the response.
     db.refresh(db_entry)
-
     return db_entry
 
 
 def get_all_entries(db: Session) -> list[Entry]:
-    """
-    Returns all entries from the database, newest first.
-    Not used in version 1 routes but useful to have for debugging.
-    """
     return db.query(Entry).order_by(Entry.created_at.desc()).all()
 
 
 def get_entry_by_id(db: Session, entry_id: int) -> Entry | None:
-    """
-    Returns a single entry by its id, or None if it doesn't exist.
-    """
     return db.query(Entry).filter(Entry.id == entry_id).first()
 
-def add_message(db, entry_id: int, role: str, content: str):
-    from models import ChatMessage
 
-    message = ChatMessage(
-        entry_id=entry_id,
-        role=role,
-        content=content
+def get_similar_entries(db: Session, embedding: list, exclude_id: int = -1, limit: int = 3) -> list[Entry]:
+    vec_str = "[" + ",".join(str(x) for x in embedding) + "]"
+    return (
+        db.query(Entry)
+        .filter(Entry.id != exclude_id)
+        .filter(Entry.embedding.isnot(None))
+        .order_by(text(f"embedding <=> '{vec_str}'::vector"))
+        .limit(limit)
+        .all()
     )
+
+
+def add_message(db: Session, entry_id: int, role: str, content: str) -> ChatMessage:
+    message = ChatMessage(entry_id=entry_id, role=role, content=content)
     db.add(message)
     db.commit()
     db.refresh(message)
     return message
 
 
-def get_messages_for_entry(db, entry_id: int):
-    from models import ChatMessage
-
+def get_messages_for_entry(db: Session, entry_id: int) -> list[ChatMessage]:
     return (
         db.query(ChatMessage)
         .filter(ChatMessage.entry_id == entry_id)
         .order_by(ChatMessage.created_at.asc())
-        .all()
-    )
-
-def get_similar_entries(db, embedding, limit: int = 3):
-    from models import Entry
-
-    return (
-        db.query(Entry)
-        .order_by(Entry.embedding.l2_distance(embedding))
-        .limit(limit)
         .all()
     )
