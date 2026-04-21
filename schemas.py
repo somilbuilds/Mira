@@ -39,3 +39,23 @@ class EntryResponse(BaseModel):
     # not just from a plain dictionary. without this, Pydantic wouldn't know
     # how to read attributes off an ORM model instance.
     model_config = {"from_attributes": True}
+
+class ChatMessageCreate(BaseModel):
+    entry_id: int
+    message: str
+
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    entry_id: int
+    role: str
+    content: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ConversationResponse(BaseModel):
+    entry_id: int
+    messages: list[ChatMessageResponse]

@@ -53,3 +53,37 @@ def get_entry_by_id(db: Session, entry_id: int) -> Entry | None:
     Returns a single entry by its id, or None if it doesn't exist.
     """
     return db.query(Entry).filter(Entry.id == entry_id).first()
+
+def add_message(db, entry_id: int, role: str, content: str):
+    from models import ChatMessage
+
+    message = ChatMessage(
+        entry_id=entry_id,
+        role=role,
+        content=content
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    return message
+
+
+def get_messages_for_entry(db, entry_id: int):
+    from models import ChatMessage
+
+    return (
+        db.query(ChatMessage)
+        .filter(ChatMessage.entry_id == entry_id)
+        .order_by(ChatMessage.created_at.asc())
+        .all()
+    )
+
+def get_similar_entries(db, embedding, limit: int = 3):
+    from models import Entry
+
+    return (
+        db.query(Entry)
+        .order_by(Entry.embedding.l2_distance(embedding))
+        .limit(limit)
+        .all()
+    )

@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from database import Base, engine
-from routes import entries
+from routes import entries, chat
 
 
 @asynccontextmanager
@@ -26,6 +26,7 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 app.include_router(entries.router)
+app.include_router(chat.router)
 
 
 @app.get("/", summary="Serve frontend")

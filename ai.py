@@ -64,3 +64,40 @@ async def get_reflection(entry_text: str) -> str | None:
         # the route handler will deal with a None reflection gracefully.
         print(f"Gemini API error: {e}")
         return None
+
+def get_chat_response(message: str, history: list, context_entries: list):
+    """
+    Simple chat response using Gemini.
+    history: list of past messages
+    context_entries: similar past journal entries (RAG)
+    """
+
+    import os
+    import google.generativeai as genai
+
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+
+    # build context
+    context_text = "\n".join([e.text for e in context_entries])
+
+    history_text = "\n".join([f"{m.role}: {m.content}" for m in history])
+
+    prompt = f"""
+You are Mira, a calm, reflective journaling companion.
+
+Past memories:
+{context_text}
+
+Conversation so far:
+{history_text}
+
+User: {message}
+
+Respond gently, thoughtfully, and insightfully.
+"""
+
+    response = model.generate_content(prompt)
+
+    return response.text
