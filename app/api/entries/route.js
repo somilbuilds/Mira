@@ -17,7 +17,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { text } = await request.json()
+    const { text, options } = await request.json()
     if (!text?.trim()) {
       return NextResponse.json({ error: 'Entry text is required' }, { status: 400 })
     }
@@ -31,12 +31,12 @@ export async function POST(request) {
     // Step 2: Retrieve similar past entries for RAG context
     let pastEntries = []
     if (embedding) {
-      const similar = await querySimilar(user.uid, embedding, 3)
+      const similar = await querySimilar(user.uid, embedding, 5)
       pastEntries = similar.map(e => e.text).filter(Boolean)
     }
 
-    // Step 3: Generate reflection + mood (single API call)
-    const { reflection, mood } = await generateReflection(text.trim(), pastEntries)
+    // Step 3: Generate reflection + mood + pattern + commitment
+    const { reflection, mood, commitment, pattern } = await generateReflection(text.trim(), pastEntries, options)
 
     // Step 4: Store in Pinecone
     if (embedding) {
@@ -45,6 +45,8 @@ export async function POST(request) {
         reflection: reflection || '',
         mood: mood || '',
         timestamp,
+        commitment: commitment || '',
+        pattern: pattern || '',
       })
     }
 
@@ -53,6 +55,8 @@ export async function POST(request) {
       text: text.trim(),
       reflection,
       mood,
+      commitment,
+      pattern,
       timestamp,
     })
   } catch (error) {

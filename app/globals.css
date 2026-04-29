@@ -21,8 +21,6 @@
   --text-ghost: #3f3f46;
 
   --accent: #8b5cf6;
-  --accent-dim: #7c3aed;
-  --accent-glow: rgba(139, 92, 246, 0.15);
   --accent-subtle: rgba(139, 92, 246, 0.08);
 
   --success: #22c55e;
@@ -102,9 +100,7 @@ body {
   border: 1px solid var(--border-subtle);
 }
 
-.glow-accent {
-  box-shadow: 0 0 30px var(--accent-glow), 0 0 60px rgba(139, 92, 246, 0.05);
-}
+
 
 /* ── Animations ── */
 @keyframes fadeIn {
@@ -171,8 +167,7 @@ button:disabled {
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-dim);
-  box-shadow: 0 4px 20px var(--accent-glow);
+  background: var(--accent);
   transform: translateY(-1px);
 }
 

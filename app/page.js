@@ -21,7 +21,6 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section className={`hero ${mounted ? 'visible' : ''}`} id="hero">
-        <div className="hero-glow" />
         <div className="hero-content">
           <p className="hero-label">mind reflective agent</p>
           <h1 className="hero-title">
@@ -153,21 +152,8 @@ export default function LandingPage() {
           transition: opacity 0.8s ease;
         }
         .hero.visible { opacity: 1; }
-        .hero-glow {
-          position: absolute;
-          top: 20%;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 600px;
-          height: 400px;
-          background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
-          pointer-events: none;
-          filter: blur(60px);
-        }
-        .hero-content {
-          position: relative;
-          z-index: 1;
-          max-width: 660px;
+        .hero-gradient {
+          color: var(--accent);
         }
         .hero-label {
           font-size: 12px;
@@ -186,12 +172,7 @@ export default function LandingPage() {
           letter-spacing: -0.02em;
         }
         .hero-gradient {
-          background: linear-gradient(135deg, var(--accent), #c084fc, #e879f9);
-          background-size: 200% 200%;
-          animation: gradient-shift 4s ease infinite;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          color: var(--accent);
         }
         .hero-subtitle {
           font-size: 17px;

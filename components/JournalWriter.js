@@ -3,6 +3,8 @@ import { useState } from 'react'
 
 export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) {
   const [text, setText] = useState('')
+  const [isUnsentLetter, setIsUnsentLetter] = useState(false)
+  const [recipient, setRecipient] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -22,7 +24,10 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ text: text.trim() }),
+        body: JSON.stringify({ 
+          text: text.trim(),
+          options: { isUnsentLetter, recipient: recipient.trim() }
+        }),
       })
 
       if (!res.ok) {
@@ -59,6 +64,27 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
 
   return (
     <div className="journal-writer">
+      <div className="mode-toggle" style={{marginBottom: 12}}>
+        <label style={{fontSize: 13, color: 'var(--text-tertiary)', display: 'flex', gap: 8, alignItems: 'center'}}>
+          <input 
+            type="checkbox" 
+            checked={isUnsentLetter} 
+            onChange={e => setIsUnsentLetter(e.target.checked)} 
+          />
+          Unsent Letter Mode
+        </label>
+      </div>
+
+      {isUnsentLetter && (
+        <input
+          type="text"
+          placeholder="To whom?"
+          value={recipient}
+          onChange={e => setRecipient(e.target.value)}
+          style={{marginBottom: 12}}
+        />
+      )}
+
       <textarea
         id="journal-input"
         value={text}
@@ -101,6 +127,18 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
           )}
           <div className="result-label">mira</div>
           <div className="result-reflection">{result.reflection || 'Entry saved, but Mira couldn\'t reflect this time.'}</div>
+          
+          {result.pattern && (
+            <div className="advanced-insight pattern-insight">
+              <strong>Pattern Spotted:</strong> {result.pattern}
+            </div>
+          )}
+          {result.commitment && (
+            <div className="advanced-insight commit-insight">
+              <strong>Commitment Logged:</strong> {result.commitment}
+            </div>
+          )}
+
           <div className="result-original">"{result.text}"</div>
           <button
             className="btn-ghost result-chat-btn"
@@ -163,6 +201,23 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
         .result-chat-btn {
           margin-top: 16px;
           font-size: 12px;
+        }
+        .advanced-insight {
+          margin-top: 16px;
+          padding: 12px;
+          border-radius: var(--radius-sm);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+        .pattern-insight {
+          background: rgba(139, 92, 246, 0.05);
+          border: 1px solid rgba(139, 92, 246, 0.2);
+          color: var(--accent);
+        }
+        .commit-insight {
+          background: rgba(34, 197, 94, 0.05);
+          border: 1px solid rgba(34, 197, 94, 0.2);
+          color: var(--success);
         }
       `}</style>
     </div>

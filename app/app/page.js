@@ -10,17 +10,18 @@ import Calendar from '@/components/Calendar'
 import MoodInsights from '@/components/MoodInsights'
 
 const TABS = [
-  { id: 'journal', label: 'journal', icon: '✍️' },
-  { id: 'history', label: 'history', icon: '📖' },
-  { id: 'calendar', label: 'calendar', icon: '📅' },
-  { id: 'insights', label: 'insights', icon: '📊' },
+  { id: 'journal', label: 'journal' },
+  { id: 'history', label: 'history' },
+  { id: 'calendar', label: 'calendar' },
+  { id: 'insights', label: 'insights' },
 ]
 
 function AppContent() {
-  const { user, loading, signInWithGoogle, signOut, getToken } = useAuth()
+  const { user, loading, signInWithGoogle, signOut, getToken, registerUser } = useAuth()
   const [activeTab, setActiveTab] = useState('journal')
   const [chatEntry, setChatEntry] = useState(null)
   const [entries, setEntries] = useState([])
+  const [regName, setRegName] = useState('')
 
   // Fetch entries when user logs in
   useEffect(() => {
@@ -84,6 +85,34 @@ function AppContent() {
     )
   }
 
+  // Registration gate
+  if (user && !user.isRegistered) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card glass">
+          <h2 className="auth-title" style={{marginBottom: 16}}>Welcome to Mira.</h2>
+          <p className="auth-desc" style={{marginBottom: 24}}>
+            Before we begin, how should I call you?
+          </p>
+          <input 
+            type="text" 
+            placeholder="Your preferred name" 
+            value={regName}
+            onChange={e => setRegName(e.target.value)}
+            style={{marginBottom: 20}}
+          />
+          <button 
+            className="btn-primary auth-btn" 
+            onClick={() => registerUser(regName)} 
+            disabled={!regName.trim()}
+          >
+            Start Journaling
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // Chat overlay
   if (chatEntry) {
     return (
@@ -113,7 +142,6 @@ function AppContent() {
             onClick={() => setActiveTab(tab.id)}
             id={`tab-${tab.id}`}
           >
-            <span className="tab-icon">{tab.icon}</span>
             <span className="tab-label">{tab.label}</span>
           </button>
         ))}

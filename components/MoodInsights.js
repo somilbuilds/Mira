@@ -1,6 +1,35 @@
 'use client'
 
+import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
+
 export default function MoodInsights({ entries }) {
+  const { getToken } = useAuth()
+  const [insightLoading, setInsightLoading] = useState(null)
+  const [advancedInsight, setAdvancedInsight] = useState(null)
+
+  const generateInsight = async (type) => {
+    setInsightLoading(type)
+    setAdvancedInsight(null)
+    try {
+      const token = await getToken()
+      const res = await fetch('/api/insights', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ type })
+      })
+      const data = await res.json()
+      setAdvancedInsight({ type, text: data.result || data.error })
+    } catch (e) {
+      setAdvancedInsight({ type, text: 'Failed to generate insight.' })
+    } finally {
+      setInsightLoading(null)
+    }
+  }
+
   if (!entries || entries.length === 0) {
     return (
       <div className="insights-empty">
@@ -64,6 +93,33 @@ export default function MoodInsights({ entries }) {
 
   return (
     <div className="insights">
+      {/* Advanced Insights Buttons */}
+      <div className="advanced-insights-actions" style={{display: 'flex', gap: 12, marginBottom: 24}}>
+        <button 
+          className="btn-primary" 
+          onClick={() => generateInsight('drift')}
+          disabled={insightLoading !== null}
+        >
+          {insightLoading === 'drift' ? 'Generating...' : 'Generate Drift Report'}
+        </button>
+        <button 
+          className="btn-ghost" 
+          onClick={() => generateInsight('chapters')}
+          disabled={insightLoading !== null}
+        >
+          {insightLoading === 'chapters' ? 'Generating...' : 'Generate Life Chapters'}
+        </button>
+      </div>
+
+      {advancedInsight && (
+        <div className="advanced-insight-result card animate-fade-in" style={{marginBottom: 32, padding: 24}}>
+          <h3 className="section-title">{advancedInsight.type === 'drift' ? 'The Drift Report' : 'Life Chapters'}</h3>
+          <div style={{fontSize: 14, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.8}}>
+            {advancedInsight.text}
+          </div>
+        </div>
+      )}
+
       {/* Stats Row */}
       <div className="stats-row">
         <div className="stat-card card">
