@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/firebase-admin'
-import { generateReflection, generateEmbedding } from '@/lib/gemini'
+import { analyzeDream, generateEmbedding } from '@/lib/gemini'
 import { upsertEntry, fetchAllEntries, querySimilar } from '@/lib/pinecone'
 
 /**
@@ -17,7 +17,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { text, options } = await request.json()
+    const { text, dreamData } = await request.json()
     if (!text?.trim()) {
       return NextResponse.json({ error: 'Entry text is required' }, { status: 400 })
     }
@@ -35,28 +35,26 @@ export async function POST(request) {
       pastEntries = similar.map(e => e.text).filter(Boolean)
     }
 
-    // Step 3: Generate reflection + mood + pattern + commitment
-    const { reflection, mood, commitment, pattern } = await generateReflection(text.trim(), pastEntries, options)
+    // Step 3: Generate summary + 3 sentiments
+    const { summary, sentiments } = await analyzeDream(text.trim(), pastEntries, dreamData)
 
     // Step 4: Store in Pinecone
     if (embedding) {
       await upsertEntry(user.uid, entryId, embedding, {
         text: text.trim(),
-        reflection: reflection || '',
-        mood: mood || '',
+        summary: summary || '',
+        sentiments: sentiments ? sentiments.join(',') : '',
         timestamp,
-        commitment: commitment || '',
-        pattern: pattern || '',
+        dreamData: dreamData ? JSON.stringify(dreamData) : '',
       })
     }
 
     return NextResponse.json({
       id: entryId,
       text: text.trim(),
-      reflection,
-      mood,
-      commitment,
-      pattern,
+      summary,
+      sentiments,
+      dreamData,
       timestamp,
     })
   } catch (error) {
