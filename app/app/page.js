@@ -164,7 +164,7 @@ function AppContent() {
             onOpenChat={openChat}
           />
         )}
-        {activeTab === 'calendar' && <Calendar />}
+        {activeTab === 'calendar' && <Calendar entries={entries} />}
         {activeTab === 'insights' && <MoodInsights entries={entries} />}
       </main>
     </div>

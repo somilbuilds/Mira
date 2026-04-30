@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-export default function Calendar() {
+export default function Calendar({ entries = [] }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
@@ -44,6 +44,11 @@ export default function Calendar() {
     return events.filter(e => e.date === dateStr)
   }
 
+  const getJournalEntriesForDate = (day) => {
+    const dateStr = getDateStr(day)
+    return entries.filter(e => e.timestamp && e.timestamp.startsWith(dateStr))
+  }
+
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1))
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1))
 
@@ -76,6 +81,16 @@ export default function Calendar() {
   }
 
   const selectedEvents = selectedDate ? events.filter(e => e.date === selectedDate) : []
+  const selectedJournalEntries = selectedDate ? entries.filter(e => e.timestamp && e.timestamp.startsWith(selectedDate)) : []
+
+  const moodColors = {
+    calm: 'var(--mood-calm)', grateful: 'var(--mood-grateful)',
+    hopeful: 'var(--mood-hopeful)', anxious: 'var(--mood-anxious)',
+    stressed: 'var(--mood-stressed)', frustrated: 'var(--mood-frustrated)',
+    sad: 'var(--mood-sad)', confused: 'var(--mood-confused)',
+    tired: 'var(--mood-tired)', excited: 'var(--mood-excited)',
+    proud: 'var(--mood-proud)', restless: 'var(--mood-restless)',
+  }
 
   // Get upcoming events (next 7 days)
   const upcoming = events
@@ -104,20 +119,39 @@ export default function Calendar() {
           if (!day) return <div key={`empty-${i}`} className="cal-cell empty" />
           const dateStr = getDateStr(day)
           const dayEvents = getEventsForDate(day)
+          const dayEntries = getJournalEntriesForDate(day)
           const isToday = dateStr === todayStr
           const isSelected = dateStr === selectedDate
+          const hasActivity = dayEvents.length > 0 || dayEntries.length > 0
+
+          // Gather sentiments for the day
+          let daySentiments = []
+          dayEntries.forEach(entry => {
+            if (entry.sentiments) {
+              daySentiments.push(...entry.sentiments.split(','))
+            }
+          })
+          // keep up to 3 unique sentiments to show as dots
+          const uniqueSentiments = [...new Set(daySentiments)].slice(0, 3)
 
           return (
             <div
               key={i}
-              className={`cal-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${dayEvents.length > 0 ? 'has-events' : ''}`}
+              className={`cal-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${hasActivity ? 'has-events' : ''}`}
               onClick={() => selectDate(day)}
             >
               <span className="cal-day-num">{day}</span>
-              {dayEvents.length > 0 && (
+              {dayEvents.length > 0 && uniqueSentiments.length === 0 && (
                 <div className="cal-dots">
                   {dayEvents.slice(0, 3).map((_, j) => (
                     <span key={j} className="cal-dot" />
+                  ))}
+                </div>
+              )}
+              {uniqueSentiments.length > 0 && (
+                <div className="cal-dots">
+                  {uniqueSentiments.map((sentiment, j) => (
+                    <span key={`sent-${j}`} className="cal-dot" style={{ backgroundColor: moodColors[sentiment] || 'var(--accent)' }} />
                   ))}
                 </div>
               )}
@@ -150,9 +184,23 @@ export default function Calendar() {
             <button className="btn-ghost" onClick={() => setSelectedDate(null)}>close</button>
           </div>
 
-          {selectedEvents.length === 0 && !showAddForm && (
-            <p className="cal-empty">no events on this date</p>
+          {selectedEvents.length === 0 && selectedJournalEntries.length === 0 && !showAddForm && (
+            <p className="cal-empty">no events or dreams on this date</p>
           )}
+
+          {selectedJournalEntries.map(entry => (
+            <div key={entry.id} className="cal-event-item card" style={{borderLeft: '2px solid var(--accent)'}}>
+              <div className="evt-title">Dream Entry</div>
+              <div className="evt-desc">{entry.summary?.substring(0, 60)}...</div>
+              <div className="sentiments-container" style={{display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 8}}>
+                {entry.sentiments && entry.sentiments.split(',').map((sentiment, i) => (
+                  <span key={i} style={{fontSize: 10, padding: '2px 6px', borderRadius: 4, background: `${moodColors[sentiment] || 'var(--bg-tertiary)'}20`, color: moodColors[sentiment] || 'var(--text-tertiary)'}}>
+                    {sentiment}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
 
           {selectedEvents.map(evt => (
             <div key={evt.id} className="cal-event-item card">
