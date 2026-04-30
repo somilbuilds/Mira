@@ -16,29 +16,52 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { entryId, message, messages = [], calendarEvents = [] } = await request.json()
+    const { entryId, message, messages = [], calendarEvents = [], global = false } = await request.json()
 
-    if (!entryId || !message?.trim()) {
-      return NextResponse.json({ error: 'entryId and message are required' }, { status: 400 })
+    if (!message?.trim()) {
+      return NextResponse.json({ error: 'message is required' }, { status: 400 })
     }
 
-    // Load the entry this conversation is about
-    const entry = await fetchEntry(user.uid, entryId)
-    if (!entry) {
-      return NextResponse.json({ error: 'Entry not found' }, { status: 404 })
-    }
-
-    // RAG: find similar past entries using the entry's embedding
     let pastEntries = []
-    try {
-      const embedding = await generateEmbedding(entry.text)
-      if (embedding) {
-        const similar = await querySimilar(user.uid, embedding, 3, entryId)
-        pastEntries = similar.map(e => e.text).filter(Boolean)
+    let entryText = ''
+    let reflection = ''
+
+    if (global) {
+      // RAG across all based on the current message
+      try {
+        const embedding = await generateEmbedding(message)
+        if (embedding) {
+          const similar = await querySimilar(user.uid, embedding, 5)
+          pastEntries = similar.map(e => `Dream Summary: ${e.summary || e.text}`).filter(Boolean)
+        }
+      } catch (e) {
+        console.error('[api/chat] Global RAG lookup failed:', e.message)
       }
-    } catch (e) {
-      // RAG failure is non-fatal — continue without memory
-      console.error('[api/chat] RAG lookup failed:', e.message)
+    } else {
+      if (!entryId) {
+        return NextResponse.json({ error: 'entryId required for local chat' }, { status: 400 })
+      }
+
+      // Load the entry this conversation is about
+      const entry = await fetchEntry(user.uid, entryId)
+      if (!entry) {
+        return NextResponse.json({ error: 'Entry not found' }, { status: 404 })
+      }
+
+      entryText = entry.text
+      reflection = entry.summary || entry.reflection || ''
+
+      // RAG: find similar past entries using the entry's embedding
+      try {
+        const embedding = await generateEmbedding(entry.text)
+        if (embedding) {
+          const similar = await querySimilar(user.uid, embedding, 3, entryId)
+          pastEntries = similar.map(e => e.summary || e.text).filter(Boolean)
+        }
+      } catch (e) {
+        // RAG failure is non-fatal — continue without memory
+        console.error('[api/chat] RAG lookup failed:', e.message)
+      }
     }
 
     // Build full messages list including the new message
@@ -46,8 +69,8 @@ export async function POST(request) {
 
     // Generate Mira's response
     const reply = await generateChatResponse({
-      entryText: entry.text,
-      reflection: entry.reflection || '',
+      entryText: entryText,
+      reflection: reflection,
       messages: allMessages,
       pastEntries,
       calendarEvents,
