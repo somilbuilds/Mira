@@ -8,11 +8,13 @@ import EntryHistory from '@/components/EntryHistory'
 import ChatPanel from '@/components/ChatPanel'
 import Calendar from '@/components/Calendar'
 import MoodInsights from '@/components/MoodInsights'
+import GlobalChat from '@/components/GlobalChat'
 
 const TABS = [
   { id: 'journal', label: 'journal' },
   { id: 'history', label: 'history' },
   { id: 'calendar', label: 'calendar' },
+  { id: 'chat', label: 'dream chat' },
   { id: 'insights', label: 'insights' },
 ]
 
@@ -165,6 +167,7 @@ function AppContent() {
           />
         )}
         {activeTab === 'calendar' && <Calendar entries={entries} />}
+        {activeTab === 'chat' && <GlobalChat entries={entries} getToken={getToken} />}
         {activeTab === 'insights' && <MoodInsights entries={entries} />}
       </main>
     </div>
