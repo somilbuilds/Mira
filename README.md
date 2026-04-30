@@ -27,7 +27,7 @@
 <br />
 
 [![Status](https://img.shields.io/badge/Status-Under_Construction-yellow?style=flat-square&logo=construction)]()
-[![Live](https://img.shields.io/badge/Live_Site-Access_on_Request-red?style=flat-square&logo=globe)]()
+[![Live](https://img.shields.io/badge/Live_Site-Access_on_Request-red?style=flat-square&logo=globe)](https://mira-git-main-somilbuilds-projects.vercel.app)
 [![Repo](https://img.shields.io/badge/GitHub-somilbuilds%2FMira-181717?style=flat-square&logo=github)](https://github.com/somilbuilds/Mira)
 
 </div>
