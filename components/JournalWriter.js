@@ -3,8 +3,14 @@ import { useState } from 'react'
 
 export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) {
   const [text, setText] = useState('')
-  const [isUnsentLetter, setIsUnsentLetter] = useState(false)
-  const [recipient, setRecipient] = useState('')
+  const [numPeople, setNumPeople] = useState('')
+  const [names, setNames] = useState('')
+  const [roles, setRoles] = useState('')
+  const [location, setLocation] = useState('')
+  const [lucidity, setLucidity] = useState(5)
+  const [isNightmare, setIsNightmare] = useState(false)
+  
+  const [showDetails, setShowDetails] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -26,7 +32,14 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
         },
         body: JSON.stringify({ 
           text: text.trim(),
-          options: { isUnsentLetter, recipient: recipient.trim() }
+          dreamData: { 
+            numPeople, 
+            names, 
+            roles, 
+            location, 
+            lucidity, 
+            isNightmare 
+          }
         }),
       })
 
@@ -65,24 +78,32 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
   return (
     <div className="journal-writer">
       <div className="mode-toggle" style={{marginBottom: 12}}>
-        <label style={{fontSize: 13, color: 'var(--text-tertiary)', display: 'flex', gap: 8, alignItems: 'center'}}>
-          <input 
-            type="checkbox" 
-            checked={isUnsentLetter} 
-            onChange={e => setIsUnsentLetter(e.target.checked)} 
-          />
-          Unsent Letter Mode
-        </label>
+        <button 
+          className="btn-ghost" 
+          onClick={() => setShowDetails(!showDetails)}
+          style={{fontSize: 12, padding: '4px 8px'}}
+        >
+          {showDetails ? 'Hide Dream Details' : '+ Add Optional Dream Details'}
+        </button>
       </div>
 
-      {isUnsentLetter && (
-        <input
-          type="text"
-          placeholder="To whom?"
-          value={recipient}
-          onChange={e => setRecipient(e.target.value)}
-          style={{marginBottom: 12}}
-        />
+      {showDetails && (
+        <div className="dream-details-form animate-fade-in" style={{marginBottom: 16, display: 'grid', gap: '12px', background: 'var(--bg-tertiary)', padding: 16, borderRadius: 'var(--radius-md)'}}>
+          <input type="number" placeholder="Number of people remembered" value={numPeople} onChange={e => setNumPeople(e.target.value)} />
+          <input type="text" placeholder="Names of people" value={names} onChange={e => setNames(e.target.value)} />
+          <input type="text" placeholder="Roles of people in the dream" value={roles} onChange={e => setRoles(e.target.value)} />
+          <input type="text" placeholder="Location of the dream" value={location} onChange={e => setLocation(e.target.value)} />
+          
+          <label style={{fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4}}>
+            Lucidity Level (1-10): {lucidity}
+            <input type="range" min="1" max="10" value={lucidity} onChange={e => setLucidity(e.target.value)} />
+          </label>
+
+          <label style={{fontSize: 13, color: 'var(--text-secondary)', display: 'flex', gap: 8, alignItems: 'center'}}>
+            <input type="checkbox" checked={isNightmare} onChange={e => setIsNightmare(e.target.checked)} />
+            This was a nightmare / pleasant dream
+          </label>
+        </div>
       )}
 
       <textarea
@@ -90,7 +111,7 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="what's on your mind today..."
+        placeholder="Describe your dream down to every single detail..."
         rows={6}
         disabled={submitting}
       />
@@ -113,31 +134,23 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
 
       {result && (
         <div className="journal-result card animate-fade-in-up">
-          {result.mood && (
-            <span
-              className="mood-tag"
-              style={{
-                color: moodColors[result.mood] || 'var(--text-tertiary)',
-                borderColor: moodColors[result.mood] || 'var(--border-default)',
-                background: `${moodColors[result.mood] || 'var(--bg-tertiary)'}15`,
-              }}
-            >
-              {result.mood}
-            </span>
-          )}
-          <div className="result-label">mira</div>
-          <div className="result-reflection">{result.reflection || 'Entry saved, but Mira couldn\'t reflect this time.'}</div>
-          
-          {result.pattern && (
-            <div className="advanced-insight pattern-insight">
-              <strong>Pattern Spotted:</strong> {result.pattern}
-            </div>
-          )}
-          {result.commitment && (
-            <div className="advanced-insight commit-insight">
-              <strong>Commitment Logged:</strong> {result.commitment}
-            </div>
-          )}
+          <div className="sentiments-container" style={{display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12}}>
+            {result.sentiments && result.sentiments.map((sentiment, i) => (
+              <span
+                key={i}
+                className="mood-tag"
+                style={{
+                  color: moodColors[sentiment] || 'var(--text-tertiary)',
+                  borderColor: moodColors[sentiment] || 'var(--border-default)',
+                  background: `${moodColors[sentiment] || 'var(--bg-tertiary)'}15`,
+                }}
+              >
+                {sentiment}
+              </span>
+            ))}
+          </div>
+          <div className="result-label">mira's dream summary</div>
+          <div className="result-reflection">{result.summary || 'Entry saved, but Mira couldn\'t reflect this time.'}</div>
 
           <div className="result-original">"{result.text}"</div>
           <button
