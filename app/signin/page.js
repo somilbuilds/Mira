@@ -37,10 +37,11 @@ function SignInContent() {
     return (
       <div className="signin-page">
         <div className="signin-card glass">
+          <div className="signin-orb" />
           <div className="signin-logo">mira</div>
-          <p className="signin-tagline">mind reflective agent</p>
+          <p className="signin-tagline">moon journal workspace</p>
           <p className="signin-desc">
-            Start in one click. Your entries stay private and tied to your Google account.
+            One clear step: sign in with Google and enter your journal.
           </p>
           <button className="btn-primary signin-btn" onClick={signInWithGoogle} id="sign-in-btn">
             Continue with Google
@@ -53,6 +54,7 @@ function SignInContent() {
   return (
     <div className="signin-page">
       <div className="signin-card glass">
+        <div className="signin-orb" />
         <h2 className="signin-title">Welcome to Mira</h2>
         <p className="signin-desc">What should Mira call you?</p>
         <input
@@ -74,18 +76,31 @@ function SignInContent() {
       </div>
       <style jsx>{`
         .signin-page {
-          min-height: 100vh;
+          min-height: calc(100vh - 2 * clamp(10px, 1.4vw, 18px));
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 24px;
+          padding: 18px;
         }
         .signin-card {
+          position: relative;
+          overflow: hidden;
           max-width: 420px;
           width: 100%;
           padding: 42px 32px;
           border-radius: var(--radius-xl);
           text-align: center;
+          box-shadow: 0 20px 45px rgba(84, 110, 161, 0.18);
+        }
+        .signin-orb {
+          position: absolute;
+          width: 220px;
+          height: 220px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(186, 208, 255, 0.35) 55%, rgba(186, 208, 255, 0) 75%);
+          top: -90px;
+          right: -90px;
+          pointer-events: none;
         }
         .signin-logo {
           font-size: 30px;

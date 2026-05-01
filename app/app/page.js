@@ -169,10 +169,13 @@ export default function AppPage() {
       <AppContent />
       <style jsx global>{`
         .workspace-loading {
-          min-height: 100vh;
+          min-height: calc(100vh - 2 * clamp(10px, 1.4vw, 18px));
           display: flex;
           align-items: center;
           justify-content: center;
+          border-radius: var(--radius-xl);
+          border: 1px solid var(--border-default);
+          background: rgba(255, 255, 255, 0.72);
         }
         .workspace-loading-text {
           font-size: 24px;
@@ -181,17 +184,22 @@ export default function AppPage() {
           animation: pulse-soft 2s ease-in-out infinite;
         }
         .workspace-shell {
-          min-height: 100vh;
+          min-height: calc(100vh - 2 * clamp(10px, 1.4vw, 18px));
           display: flex;
-          background: var(--bg-primary);
+          background: rgba(255, 255, 255, 0.62);
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-xl);
+          overflow: hidden;
+          box-shadow: 0 22px 50px rgba(93, 118, 166, 0.12);
         }
         .workspace-sidebar {
           width: 260px;
-          border-right: 1px solid var(--border-subtle);
+          border-right: 1px solid var(--border-default);
           padding: 24px 16px;
           display: flex;
           flex-direction: column;
           gap: 18px;
+          background: rgba(238, 246, 255, 0.72);
         }
         .workspace-brand {
           font-size: 18px;
@@ -258,7 +266,7 @@ export default function AppPage() {
         .workspace-main {
           flex: 1;
           min-width: 0;
-          padding: 24px;
+          padding: clamp(14px, 1.4vw, 22px);
         }
         .workspace-section {
           display: none;
@@ -273,7 +281,7 @@ export default function AppPage() {
           .workspace-sidebar {
             width: 100%;
             border-right: 0;
-            border-bottom: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-default);
           }
           .workspace-nav {
             flex-direction: row;

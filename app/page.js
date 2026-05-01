@@ -9,73 +9,57 @@ export default function LandingPage() {
 
   return (
     <div className="landing">
-      {/* ── Nav ── */}
       <nav className="landing-nav">
         <div className="nav-inner">
-          <div className="nav-logo">mira</div>
+          <div className="nav-logo">mira <span>moon journal</span></div>
           <Link href="/signin" className="btn-primary" id="nav-cta">
-            open journal
+            Sign in
           </Link>
         </div>
       </nav>
 
-      {/* ── Hero ── */}
       <section className={`hero ${mounted ? 'visible' : ''}`} id="hero">
+        <div className="moon-glow" />
         <div className="hero-content">
-          <p className="hero-label">mind reflective agent</p>
+          <p className="hero-label">quiet night reflections</p>
           <h1 className="hero-title">
-            Write. Reflect.<br />
-            <span className="hero-gradient">Remember.</span>
+            Keep your dreams<br />
+            <span className="hero-gradient">in one sky.</span>
           </h1>
           <p className="hero-subtitle">
-            An AI journal that reads between your lines. Mira remembers your patterns, 
-            connects your entries, and mentors your growth — not with platitudes, 
-            but with real depth.
+            Mira helps you capture dreams, follow emotional patterns, and continue a conversation
+            with context from your past entries. Calm, structured, and yours.
           </p>
           <div className="hero-actions">
             <Link href="/signin" className="btn-primary hero-btn" id="hero-cta">
-              Start Writing
+              Start journaling
             </Link>
-            <a href="#features" className="btn-ghost hero-btn">
-              How it works
-            </a>
           </div>
         </div>
       </section>
 
-      {/* ── Features ── */}
       <section className="features" id="features">
         <div className="features-grid">
           {[
             {
-              icon: '✍️',
-              title: 'Journal with Depth',
-              desc: 'Write freely. Mira reflects back what matters — the tension, the pattern, the unasked question.',
+              icon: '🌙',
+              title: 'Dream-first capture',
+              desc: 'Write quickly, or add optional structure only when you need it.',
             },
             {
-              icon: '🧠',
-              title: 'RAG Memory',
-              desc: 'Every entry is embedded into vector space. Mira recalls similar past entries and weaves them into context.',
+              icon: '☁️',
+              title: 'Soft, spacious workspace',
+              desc: 'A left-side layout that keeps your writing and chat flowing without reset.',
             },
             {
               icon: '💬',
-              title: 'Mentor, Not Therapist',
-              desc: 'Talk to Mira like a wise friend. Direct, honest, practical. No fluff, no diagnosis, no empty motivation.',
+              title: 'Dream chat that remembers',
+              desc: 'Continue conversation over time with context from your own journal.',
             },
             {
               icon: '📅',
-              title: 'Calendar Awareness',
-              desc: 'Mark important dates. Mira factors your deadlines, events, and milestones into its responses.',
-            },
-            {
-              icon: '📊',
-              title: 'Mood Insights',
-              desc: 'Track emotional patterns over time. See your trends. Notice what you couldn\'t see in the moment.',
-            },
-            {
-              icon: '🔒',
-              title: 'Private & Secure',
-              desc: 'Firebase auth keeps your entries yours. Your thoughts are encrypted and never shared.',
+              title: 'Calendar and insights',
+              desc: 'See patterns by date and mood so dreams become useful over time.',
             },
           ].map((f, i) => (
             <div
@@ -91,39 +75,38 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
       <section className="cta-section">
         <div className="cta-inner glass">
-          <h2 className="cta-title">Your journal remembers<br />so you can move forward.</h2>
-          <p className="cta-desc">Start writing. Mira does the rest.</p>
+          <h2 className="cta-title">A cleaner space for your nights.</h2>
+          <p className="cta-desc">One login. One workspace. No clutter.</p>
           <Link href="/signin" className="btn-primary hero-btn" id="footer-cta">
-            Open Mira
+            Sign in to Mira
           </Link>
         </div>
       </section>
 
-      {/* ── Footer ── */}
       <footer className="landing-footer">
-        <p>mira — built by <a href="https://github.com/somilbuilds" target="_blank" rel="noopener">somilbuilds</a></p>
+        <p>mira</p>
       </footer>
 
       <style jsx>{`
         .landing {
-          min-height: 100vh;
+          min-height: calc(100vh - 2 * clamp(10px, 1.4vw, 18px));
+          border-radius: var(--radius-xl);
+          border: 1px solid var(--border-subtle);
+          background: rgba(255, 255, 255, 0.5);
+          box-shadow: 0 22px 50px rgba(90, 118, 170, 0.12);
           overflow-x: hidden;
         }
 
-        /* ── Nav ── */
         .landing-nav {
-          position: fixed;
+          position: sticky;
           top: 0;
-          left: 0;
-          right: 0;
           z-index: 100;
-          padding: 16px 24px;
-          background: rgba(9, 9, 11, 0.8);
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid var(--border-subtle);
+          padding: 16px 28px;
+          background: rgba(255, 255, 255, 0.72);
+          backdrop-filter: blur(16px);
+          border-bottom: 1px solid var(--border-default);
         }
         .nav-inner {
           max-width: 1100px;
@@ -133,27 +116,43 @@ export default function LandingPage() {
           align-items: center;
         }
         .nav-logo {
-          font-size: 20px;
-          font-weight: 600;
+          font-size: 18px;
+          font-weight: 700;
           letter-spacing: 0.08em;
-          color: var(--text-secondary);
+          color: var(--text-primary);
+        }
+        .nav-logo span {
+          font-size: 11px;
+          color: var(--text-tertiary);
+          margin-left: 8px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
         }
 
-        /* ── Hero ── */
         .hero {
           position: relative;
-          min-height: 100vh;
+          min-height: min(760px, 82vh);
           display: flex;
           align-items: center;
           justify-content: center;
           text-align: center;
-          padding: 120px 24px 80px;
+          padding: 96px 24px 64px;
           opacity: 0;
           transition: opacity 0.8s ease;
         }
+        .moon-glow {
+          position: absolute;
+          width: 340px;
+          height: 340px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(193, 214, 255, 0.35) 45%, rgba(193, 214, 255, 0) 75%);
+          top: 10%;
+          right: 10%;
+          pointer-events: none;
+        }
         .hero.visible { opacity: 1; }
         .hero-gradient {
-          color: var(--accent);
+          color: #4e74c8;
         }
         .hero-label {
           font-size: 12px;
@@ -164,7 +163,7 @@ export default function LandingPage() {
           font-weight: 500;
         }
         .hero-title {
-          font-size: clamp(36px, 6vw, 64px);
+          font-size: clamp(34px, 5.5vw, 60px);
           font-weight: 700;
           line-height: 1.1;
           color: var(--text-primary);
@@ -178,14 +177,14 @@ export default function LandingPage() {
           font-size: 17px;
           line-height: 1.7;
           color: var(--text-tertiary);
-          margin-bottom: 40px;
-          max-width: 520px;
+          margin-bottom: 28px;
+          max-width: 620px;
           margin-left: auto;
           margin-right: auto;
         }
         .hero-actions {
           display: flex;
-          gap: 12px;
+          gap: 10px;
           justify-content: center;
           flex-wrap: wrap;
         }
@@ -195,19 +194,18 @@ export default function LandingPage() {
           text-decoration: none;
         }
 
-        /* ── Features ── */
         .features {
-          padding: 80px 24px 100px;
-          max-width: 1100px;
+          padding: 36px 24px 76px;
+          max-width: 1000px;
           margin: 0 auto;
         }
         .features-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 14px;
         }
         .feature-card {
-          padding: 28px;
+          padding: 22px;
           opacity: 0;
           animation: fadeInUp 0.5s ease-out forwards;
         }
@@ -231,10 +229,9 @@ export default function LandingPage() {
           color: var(--text-tertiary);
         }
 
-        /* ── CTA ── */
         .cta-section {
-          padding: 40px 24px 100px;
-          max-width: 700px;
+          padding: 8px 24px 64px;
+          max-width: 760px;
           margin: 0 auto;
         }
         .cta-inner {
@@ -243,7 +240,7 @@ export default function LandingPage() {
           border-radius: var(--radius-xl);
         }
         .cta-title {
-          font-size: 28px;
+          font-size: 32px;
           font-weight: 600;
           line-height: 1.3;
           color: var(--text-primary);
@@ -255,25 +252,19 @@ export default function LandingPage() {
           margin-bottom: 28px;
         }
 
-        /* ── Footer ── */
         .landing-footer {
           text-align: center;
-          padding: 40px 24px;
+          padding: 22px 24px 28px;
           border-top: 1px solid var(--border-subtle);
           font-size: 13px;
           color: var(--text-muted);
         }
-        .landing-footer a {
-          color: var(--text-tertiary);
-          text-decoration: none;
-        }
-        .landing-footer a:hover {
-          color: var(--accent);
-        }
 
         @media (max-width: 640px) {
-          .hero { padding: 100px 20px 60px; }
+          .nav-logo span { display: none; }
+          .hero { padding: 72px 20px 48px; min-height: 72vh; }
           .hero-subtitle { font-size: 15px; }
+          .moon-glow { width: 240px; height: 240px; right: 0; top: 8%; }
           .features-grid { grid-template-columns: 1fr; }
           .cta-inner { padding: 40px 24px; }
         }
