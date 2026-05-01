@@ -13,7 +13,7 @@ export default function LandingPage() {
       <nav className="landing-nav">
         <div className="nav-inner">
           <div className="nav-logo">mira</div>
-          <Link href="/app" className="btn-primary" id="nav-cta">
+          <Link href="/signin" className="btn-primary" id="nav-cta">
             open journal
           </Link>
         </div>
@@ -33,7 +33,7 @@ export default function LandingPage() {
             but with real depth.
           </p>
           <div className="hero-actions">
-            <Link href="/app" className="btn-primary hero-btn" id="hero-cta">
+            <Link href="/signin" className="btn-primary hero-btn" id="hero-cta">
               Start Writing
             </Link>
             <a href="#features" className="btn-ghost hero-btn">
@@ -96,7 +96,7 @@ export default function LandingPage() {
         <div className="cta-inner glass">
           <h2 className="cta-title">Your journal remembers<br />so you can move forward.</h2>
           <p className="cta-desc">Start writing. Mira does the rest.</p>
-          <Link href="/app" className="btn-primary hero-btn" id="footer-cta">
+          <Link href="/signin" className="btn-primary hero-btn" id="footer-cta">
             Open Mira
           </Link>
         </div>
