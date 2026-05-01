@@ -24,7 +24,9 @@ export async function POST(request) {
 
     // Limit to 50 entries to save tokens, sorted newest first
     const recentEntries = entries.slice(0, 50)
-    const historyText = recentEntries.map(e => `[${e.timestamp}] MOOD:${e.mood} | ${e.text}`).join('\n\n')
+    const historyText = recentEntries
+      .map((e) => `[${e.timestamp}] MOOD:${e.mood || e.sentiments || 'unknown'} | ${e.text}`)
+      .join('\n\n')
 
     let prompt = ''
 

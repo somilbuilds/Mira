@@ -188,7 +188,7 @@ button:disabled {
 }
 
 /* ── Input Base ── */
-textarea, input[type="text"], input[type="email"], input[type="password"] {
+textarea, input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="time"], input[type="number"] {
   font-family: var(--font);
   width: 100%;
   background: var(--bg-input);
@@ -206,6 +206,11 @@ textarea, input[type="text"], input[type="email"], input[type="password"] {
 textarea:focus, input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
 }
 
 textarea::placeholder, input::placeholder {

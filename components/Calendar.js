@@ -92,6 +92,13 @@ export default function Calendar({ entries = [] }) {
     proud: 'var(--mood-proud)', restless: 'var(--mood-restless)',
   }
 
+  const getSentiments = (entry) => {
+    if (Array.isArray(entry.sentiments)) return entry.sentiments
+    if (typeof entry.sentiments === 'string') return entry.sentiments.split(',').map((s) => s.trim()).filter(Boolean)
+    if (entry.mood) return [entry.mood]
+    return []
+  }
+
   // Get upcoming events (next 7 days)
   const upcoming = events
     .filter(e => {
@@ -127,9 +134,7 @@ export default function Calendar({ entries = [] }) {
           // Gather sentiments for the day
           let daySentiments = []
           dayEntries.forEach(entry => {
-            if (entry.sentiments) {
-              daySentiments.push(...entry.sentiments.split(','))
-            }
+            daySentiments.push(...getSentiments(entry))
           })
           // keep up to 3 unique sentiments to show as dots
           const uniqueSentiments = [...new Set(daySentiments)].slice(0, 3)
@@ -191,9 +196,9 @@ export default function Calendar({ entries = [] }) {
           {selectedJournalEntries.map(entry => (
             <div key={entry.id} className="cal-event-item card" style={{borderLeft: '2px solid var(--accent)'}}>
               <div className="evt-title">Dream Entry</div>
-              <div className="evt-desc">{entry.summary?.substring(0, 60)}...</div>
+              <div className="evt-desc">{(entry.summary || entry.text || '').substring(0, 80)}...</div>
               <div className="sentiments-container" style={{display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 8}}>
-                {entry.sentiments && entry.sentiments.split(',').map((sentiment, i) => (
+                {getSentiments(entry).map((sentiment, i) => (
                   <span key={i} style={{fontSize: 10, padding: '2px 6px', borderRadius: 4, background: `${moodColors[sentiment] || 'var(--bg-tertiary)'}20`, color: moodColors[sentiment] || 'var(--text-tertiary)'}}>
                     {sentiment}
                   </span>

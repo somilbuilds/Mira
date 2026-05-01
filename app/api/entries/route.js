@@ -37,15 +37,21 @@ export async function POST(request) {
 
     // Step 3: Generate summary + 3 sentiments
     const { summary, sentiments } = await analyzeDream(text.trim(), pastEntries, dreamData)
+    const normalizedSentiments = Array.isArray(sentiments) ? sentiments : []
 
     // Step 4: Store in Pinecone
     if (embedding) {
       await upsertEntry(user.uid, entryId, embedding, {
         text: text.trim(),
         summary: summary || '',
-        sentiments: sentiments ? sentiments.join(',') : '',
+        sentiments: normalizedSentiments.join(','),
+        mood: normalizedSentiments[0] || dreamData?.emotionalTone || '',
         timestamp,
-        dreamData: dreamData ? JSON.stringify(dreamData) : '',
+        dreamData,
+        sleepQuality: dreamData?.sleepQuality || '',
+        dreamDate: dreamData?.dreamDate || '',
+        dreamTime: dreamData?.dreamTime || '',
+        notesToSelf: dreamData?.notesToSelf || '',
       })
     }
 
@@ -53,7 +59,7 @@ export async function POST(request) {
       id: entryId,
       text: text.trim(),
       summary,
-      sentiments,
+      sentiments: normalizedSentiments,
       dreamData,
       timestamp,
     })

@@ -13,9 +13,9 @@ export default function ChatPanel({ entry, onBack, getToken }) {
     const stored = localStorage.getItem(`mira_chat_${entry.id}`)
     if (stored) {
       setMessages(JSON.parse(stored))
-    } else if (entry.reflection) {
+    } else if (entry.summary || entry.reflection) {
       // Show the initial reflection as Mira's first message
-      const initial = [{ role: 'mira', content: entry.reflection }]
+      const initial = [{ role: 'mira', content: entry.summary || entry.reflection }]
       setMessages(initial)
       localStorage.setItem(`mira_chat_${entry.id}`, JSON.stringify(initial))
     }

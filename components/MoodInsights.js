@@ -59,11 +59,19 @@ export default function MoodInsights({ entries }) {
     proud: 'var(--mood-proud)', restless: 'var(--mood-restless)',
   }
 
+  const getEntryMood = (entry) => {
+    if (entry.mood) return entry.mood
+    if (Array.isArray(entry.sentiments) && entry.sentiments[0]) return entry.sentiments[0]
+    if (typeof entry.sentiments === 'string') return entry.sentiments.split(',').map((s) => s.trim()).filter(Boolean)[0] || ''
+    return ''
+  }
+
   // Count moods
   const moodCounts = {}
   entries.forEach(e => {
-    if (e.mood) {
-      moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1
+    const mood = getEntryMood(e)
+    if (mood) {
+      moodCounts[mood] = (moodCounts[mood] || 0) + 1
     }
   })
 
@@ -72,11 +80,11 @@ export default function MoodInsights({ entries }) {
 
   const maxCount = Math.max(...Object.values(moodCounts), 1)
   const totalEntries = entries.length
-  const moodedEntries = entries.filter(e => e.mood).length
+  const moodedEntries = entries.filter(e => getEntryMood(e)).length
 
   // Recent mood timeline (last 14 entries)
   const recentEntries = entries
-    .filter(e => e.mood)
+    .filter(e => getEntryMood(e))
     .slice(0, 14)
     .reverse()
 
@@ -171,10 +179,10 @@ export default function MoodInsights({ entries }) {
               <div key={i} className="timeline-item">
                 <div
                   className="timeline-dot"
-                  style={{ background: moodColors[entry.mood] || 'var(--text-ghost)' }}
-                  title={`${entry.mood} — ${new Date(entry.timestamp).toLocaleDateString()}`}
+                  style={{ background: moodColors[getEntryMood(entry)] || 'var(--text-ghost)' }}
+                  title={`${getEntryMood(entry)} — ${new Date(entry.timestamp).toLocaleDateString()}`}
                 />
-                <span className="timeline-mood">{entry.mood}</span>
+                <span className="timeline-mood">{getEntryMood(entry)}</span>
               </div>
             ))}
           </div>

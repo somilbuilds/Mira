@@ -4,6 +4,13 @@ import { useState } from 'react'
 export default function EntryHistory({ entries, onRefresh, onOpenChat }) {
   const [expandedId, setExpandedId] = useState(null)
 
+  const getEntryMood = (entry) => {
+    if (entry.mood) return entry.mood
+    if (Array.isArray(entry.sentiments) && entry.sentiments[0]) return entry.sentiments[0]
+    if (typeof entry.sentiments === 'string') return entry.sentiments.split(',').map((s) => s.trim()).filter(Boolean)[0] || ''
+    return ''
+  }
+
   const toggleEntry = (id) => {
     setExpandedId(expandedId === id ? null : id)
   }
@@ -64,16 +71,16 @@ export default function EntryHistory({ entries, onRefresh, onOpenChat }) {
             <div className="entry-header" onClick={() => toggleEntry(entry.id)}>
               <div className="entry-preview">{entry.text}</div>
               <div className="entry-meta">
-                {entry.mood && (
+                {getEntryMood(entry) && (
                   <span
                     className="mood-tag"
                     style={{
-                      color: moodColors[entry.mood] || 'var(--text-muted)',
-                      borderColor: `${moodColors[entry.mood] || 'var(--border-default)'}50`,
-                      background: `${moodColors[entry.mood] || 'var(--bg-tertiary)'}10`,
+                      color: moodColors[getEntryMood(entry)] || 'var(--text-muted)',
+                      borderColor: `${moodColors[getEntryMood(entry)] || 'var(--border-default)'}50`,
+                      background: `${moodColors[getEntryMood(entry)] || 'var(--bg-tertiary)'}10`,
                     }}
                   >
-                    {entry.mood}
+                    {getEntryMood(entry)}
                   </span>
                 )}
                 <span className="entry-date">{formatDate(entry.timestamp)}</span>
@@ -84,10 +91,10 @@ export default function EntryHistory({ entries, onRefresh, onOpenChat }) {
             {expandedId === entry.id && (
               <div className="entry-body animate-fade-in">
                 <div className="entry-full-text">{entry.text}</div>
-                {entry.reflection && (
+                {(entry.summary || entry.reflection) && (
                   <>
                     <div className="entry-reflection-label">mira</div>
-                    <div className="entry-reflection-text">{entry.reflection}</div>
+                    <div className="entry-reflection-text">{entry.summary || entry.reflection}</div>
                   </>
                 )}
                 <button

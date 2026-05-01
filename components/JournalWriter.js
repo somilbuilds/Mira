@@ -1,22 +1,92 @@
-'use client'
-import { useState } from 'react'
+ 'use client'
+import { useEffect, useMemo, useState } from 'react'
 
-export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) {
-  const [text, setText] = useState('')
-  const [numPeople, setNumPeople] = useState('')
-  const [names, setNames] = useState('')
-  const [roles, setRoles] = useState('')
-  const [location, setLocation] = useState('')
-  const [lucidity, setLucidity] = useState(5)
-  const [isNightmare, setIsNightmare] = useState(false)
-  
-  const [showDetails, setShowDetails] = useState(false)
+const SECTION_LABELS = {
+  people: 'People',
+  places: 'Places',
+  symbols: 'Symbols',
+  lucidity: 'Lucidity and nightmare',
+  bodySensation: 'Body sensations',
+  recurring: 'Recurring markers',
+  tags: 'Tags',
+  reflection: 'Reflection prompts',
+}
+
+const DEFAULT_FORM = {
+  text: '',
+  dreamDate: '',
+  dreamTime: '',
+  emotionalTone: '',
+  sleepQuality: 5,
+  notesToSelf: '',
+  optionalEnabled: {
+    people: false,
+    places: false,
+    symbols: false,
+    lucidity: true,
+    bodySensation: false,
+    recurring: false,
+    tags: true,
+    reflection: false,
+  },
+  details: {
+    people: '',
+    places: '',
+    symbols: '',
+    lucidity: 5,
+    isNightmare: false,
+    bodySensation: '',
+    recurring: '',
+    tags: '',
+    reflectionPrompt: '',
+  },
+}
+
+function getInitialDateTime() {
+  const now = new Date()
+  const date = now.toISOString().split('T')[0]
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  return { date, time }
+}
+
+export default function JournalWriter({ userId, getToken, onEntryCreated, onOpenChat }) {
+  const initialDateTime = useMemo(() => getInitialDateTime(), [])
+  const [form, setForm] = useState({
+    ...DEFAULT_FORM,
+    dreamDate: initialDateTime.date,
+    dreamTime: initialDateTime.time,
+  })
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
 
+  const draftKey = `mira_journal_draft_${userId || 'anon'}`
+
+  useEffect(() => {
+    if (!userId) return
+    try {
+      const stored = localStorage.getItem(draftKey)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setForm((prev) => ({
+          ...prev,
+          ...parsed,
+          optionalEnabled: { ...prev.optionalEnabled, ...(parsed.optionalEnabled || {}) },
+          details: { ...prev.details, ...(parsed.details || {}) },
+        }))
+      }
+    } catch (e) {
+      console.error('Failed to restore draft', e)
+    }
+  }, [draftKey, userId])
+
+  useEffect(() => {
+    if (!userId) return
+    localStorage.setItem(draftKey, JSON.stringify(form))
+  }, [draftKey, form, userId])
+
   const submit = async () => {
-    if (!text.trim() || submitting) return
+    if (!form.text.trim() || submitting) return
 
     setSubmitting(true)
     setError(null)
@@ -30,16 +100,17 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ 
-          text: text.trim(),
-          dreamData: { 
-            numPeople, 
-            names, 
-            roles, 
-            location, 
-            lucidity, 
-            isNightmare 
-          }
+        body: JSON.stringify({
+          text: form.text.trim(),
+          dreamData: {
+            dreamDate: form.dreamDate,
+            dreamTime: form.dreamTime,
+            emotionalTone: form.emotionalTone,
+            sleepQuality: Number(form.sleepQuality),
+            notesToSelf: form.notesToSelf,
+            optionalEnabled: form.optionalEnabled,
+            details: form.details,
+          },
         }),
       })
 
@@ -50,7 +121,13 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
 
       const data = await res.json()
       setResult(data)
-      setText('')
+      const freshDateTime = getInitialDateTime()
+      setForm({
+        ...DEFAULT_FORM,
+        dreamDate: freshDateTime.date,
+        dreamTime: freshDateTime.time,
+      })
+      localStorage.removeItem(draftKey)
       if (onEntryCreated) onEntryCreated(data)
     } catch (err) {
       setError(err.message)
@@ -78,49 +155,220 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
   return (
     <div className="journal-writer">
       <div className="mode-toggle" style={{marginBottom: 12}}>
-        <button 
-          className="btn-ghost" 
-          onClick={() => setShowDetails(!showDetails)}
-          style={{fontSize: 12, padding: '4px 8px'}}
-        >
-          {showDetails ? 'Hide Dream Details' : '+ Add Optional Dream Details'}
-        </button>
+        <span className="journal-heading">Dream capture</span>
       </div>
 
-      {showDetails && (
-        <div className="dream-details-form animate-fade-in" style={{marginBottom: 16, display: 'grid', gap: '12px', background: 'var(--bg-tertiary)', padding: 16, borderRadius: 'var(--radius-md)'}}>
-          <input type="number" placeholder="Number of people remembered" value={numPeople} onChange={e => setNumPeople(e.target.value)} />
-          <input type="text" placeholder="Names of people" value={names} onChange={e => setNames(e.target.value)} />
-          <input type="text" placeholder="Roles of people in the dream" value={roles} onChange={e => setRoles(e.target.value)} />
-          <input type="text" placeholder="Location of the dream" value={location} onChange={e => setLocation(e.target.value)} />
-          
-          <label style={{fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4}}>
-            Lucidity Level (1-10): {lucidity}
-            <input type="range" min="1" max="10" value={lucidity} onChange={e => setLucidity(e.target.value)} />
-          </label>
-
-          <label style={{fontSize: 13, color: 'var(--text-secondary)', display: 'flex', gap: 8, alignItems: 'center'}}>
-            <input type="checkbox" checked={isNightmare} onChange={e => setIsNightmare(e.target.checked)} />
-            This was a nightmare / pleasant dream
-          </label>
-        </div>
-      )}
+      <div className="journal-core-grid card">
+        <label className="field">
+          <span>Dream date</span>
+          <input
+            type="date"
+            value={form.dreamDate}
+            onChange={(e) => setForm((prev) => ({ ...prev, dreamDate: e.target.value }))}
+          />
+        </label>
+        <label className="field">
+          <span>Dream time</span>
+          <input
+            type="time"
+            value={form.dreamTime}
+            onChange={(e) => setForm((prev) => ({ ...prev, dreamTime: e.target.value }))}
+          />
+        </label>
+        <label className="field">
+          <span>Emotional tone</span>
+          <input
+            type="text"
+            placeholder="e.g. uneasy, curious, relieved"
+            value={form.emotionalTone}
+            onChange={(e) => setForm((prev) => ({ ...prev, emotionalTone: e.target.value }))}
+          />
+        </label>
+        <label className="field">
+          <span>Sleep quality (1-10): {form.sleepQuality}</span>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={form.sleepQuality}
+            onChange={(e) => setForm((prev) => ({ ...prev, sleepQuality: e.target.value }))}
+          />
+        </label>
+      </div>
 
       <textarea
         id="journal-input"
-        value={text}
-        onChange={e => setText(e.target.value)}
+        value={form.text}
+        onChange={(e) => setForm((prev) => ({ ...prev, text: e.target.value }))}
         onKeyDown={handleKeyDown}
-        placeholder="Describe your dream down to every single detail..."
-        rows={6}
+        placeholder="Write your dream in as much detail as you remember..."
+        rows={7}
         disabled={submitting}
       />
+
+      <label className="field notes-field">
+        <span>Notes to self (optional)</span>
+        <textarea
+          value={form.notesToSelf}
+          onChange={(e) => setForm((prev) => ({ ...prev, notesToSelf: e.target.value }))}
+          rows={3}
+          placeholder="What do you want to remember or revisit later?"
+          disabled={submitting}
+        />
+      </label>
+
+      <div className="optional-builder card">
+        <div className="optional-header">
+          <h3>Customize optional sections</h3>
+          <p>Turn on only what matters for this dream.</p>
+        </div>
+        <div className="toggle-grid">
+          {Object.keys(SECTION_LABELS).map((key) => (
+            <label key={key} className="toggle-item">
+              <input
+                type="checkbox"
+                checked={form.optionalEnabled[key]}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    optionalEnabled: {
+                      ...prev.optionalEnabled,
+                      [key]: e.target.checked,
+                    },
+                  }))
+                }
+              />
+              <span>{SECTION_LABELS[key]}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="optional-sections">
+        {form.optionalEnabled.people && (
+          <label className="field">
+            <span>People in dream</span>
+            <input
+              type="text"
+              value={form.details.people}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, details: { ...prev.details, people: e.target.value } }))
+              }
+              placeholder="Names, roles, relationships"
+            />
+          </label>
+        )}
+        {form.optionalEnabled.places && (
+          <label className="field">
+            <span>Places and setting</span>
+            <input
+              type="text"
+              value={form.details.places}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, details: { ...prev.details, places: e.target.value } }))
+              }
+              placeholder="Where did it happen?"
+            />
+          </label>
+        )}
+        {form.optionalEnabled.symbols && (
+          <label className="field">
+            <span>Symbols and themes</span>
+            <input
+              type="text"
+              value={form.details.symbols}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, details: { ...prev.details, symbols: e.target.value } }))
+              }
+              placeholder="Objects, animals, motifs"
+            />
+          </label>
+        )}
+        {form.optionalEnabled.lucidity && (
+          <div className="card optional-card">
+            <label className="field">
+              <span>Lucidity (1-10): {form.details.lucidity}</span>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={form.details.lucidity}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, details: { ...prev.details, lucidity: Number(e.target.value) } }))
+                }
+              />
+            </label>
+            <label className="toggle-item">
+              <input
+                type="checkbox"
+                checked={form.details.isNightmare}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, details: { ...prev.details, isNightmare: e.target.checked } }))
+                }
+              />
+              <span>Mark as nightmare</span>
+            </label>
+          </div>
+        )}
+        {form.optionalEnabled.bodySensation && (
+          <label className="field">
+            <span>Body sensations</span>
+            <input
+              type="text"
+              value={form.details.bodySensation}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, details: { ...prev.details, bodySensation: e.target.value } }))
+              }
+              placeholder="Heavy chest, floating, numb, energetic..."
+            />
+          </label>
+        )}
+        {form.optionalEnabled.recurring && (
+          <label className="field">
+            <span>Recurring markers</span>
+            <input
+              type="text"
+              value={form.details.recurring}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, details: { ...prev.details, recurring: e.target.value } }))
+              }
+              placeholder="Any repeats from past dreams?"
+            />
+          </label>
+        )}
+        {form.optionalEnabled.tags && (
+          <label className="field">
+            <span>Tags</span>
+            <input
+              type="text"
+              value={form.details.tags}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, details: { ...prev.details, tags: e.target.value } }))
+              }
+              placeholder="comma separated tags"
+            />
+          </label>
+        )}
+        {form.optionalEnabled.reflection && (
+          <label className="field">
+            <span>Reflection prompt</span>
+            <textarea
+              value={form.details.reflectionPrompt}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, details: { ...prev.details, reflectionPrompt: e.target.value } }))
+              }
+              rows={2}
+              placeholder="What question do you want Mira to focus on?"
+            />
+          </label>
+        )}
+      </div>
 
       <div className="journal-actions">
         <button
           className="btn-primary"
           onClick={submit}
-          disabled={!text.trim() || submitting}
+          disabled={!form.text.trim() || submitting}
           id="reflect-btn"
         >
           {submitting ? 'reflecting...' : 'reflect'}
@@ -166,6 +414,64 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
       <style jsx>{`
         .journal-writer {
           animation: fadeIn 0.3s ease-out;
+        }
+        .journal-heading {
+          font-size: 14px;
+          color: var(--text-muted);
+        }
+        .journal-core-grid {
+          margin-bottom: 14px;
+          padding: 14px;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+        .field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .field span {
+          font-size: 12px;
+          color: var(--text-muted);
+        }
+        .notes-field {
+          margin-top: 12px;
+        }
+        .optional-builder {
+          margin-top: 12px;
+          padding: 14px;
+        }
+        .optional-header h3 {
+          font-size: 14px;
+          margin-bottom: 2px;
+        }
+        .optional-header p {
+          font-size: 12px;
+          color: var(--text-ghost);
+          margin-bottom: 12px;
+        }
+        .toggle-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+        .toggle-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          color: var(--text-secondary);
+        }
+        .optional-sections {
+          margin-top: 12px;
+          display: grid;
+          gap: 10px;
+        }
+        .optional-card {
+          padding: 12px;
+          display: grid;
+          gap: 8px;
         }
         .journal-actions {
           display: flex;
@@ -215,22 +521,12 @@ export default function JournalWriter({ getToken, onEntryCreated, onOpenChat }) 
           margin-top: 16px;
           font-size: 12px;
         }
-        .advanced-insight {
-          margin-top: 16px;
-          padding: 12px;
-          border-radius: var(--radius-sm);
-          font-size: 13px;
-          line-height: 1.5;
-        }
-        .pattern-insight {
-          background: rgba(139, 92, 246, 0.05);
-          border: 1px solid rgba(139, 92, 246, 0.2);
-          color: var(--accent);
-        }
-        .commit-insight {
-          background: rgba(34, 197, 94, 0.05);
-          border: 1px solid rgba(34, 197, 94, 0.2);
-          color: var(--success);
+
+        @media (max-width: 700px) {
+          .journal-core-grid,
+          .toggle-grid {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
     </div>
